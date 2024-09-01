@@ -21,11 +21,24 @@ RUN apt-get update --fix-missing && \
         ntpdate \
         postgresql-common \
         pkg-config \
+        gnupg \
+        curl \
+        libxml2-dev \
+        libxmlsec1-dev \
+        libxmlsec1-openssl \
+        libpq-dev \
+        g++ \
+        gcc \
+        git \
         python3-dev \
         python3-wheel \
         python3-pip \
+        python3-venv \
+        python3-distutils \
+        build-essential \
         wget \
         unzip && \
+    # Set up Python environment
     python3 -m venv $VENV_PATH && \
     $VENV_PATH/bin/pip install --upgrade pip && \
     $VENV_PATH/bin/pip install -r /tmp/requirements.txt && \
@@ -39,3 +52,14 @@ RUN apt-get update --fix-missing && \
     groupadd -g $DJANGO_GID $DJANGO_USER && \
     useradd -m -u $DJANGO_UID -g $DJANGO_GID $DJANGO_USER
 
+# Set permissions for application files
+RUN mkdir -p /backend/logs /backend/apps && \
+    touch /backend/logs/debug.log && \
+    chmod 666 /backend/logs/debug.log && \
+    chown -R $DJANGO_USER:$DJANGO_USER $VENV_PATH /backend /backend/apps /backend/logs
+
+COPY ./apps /backend/apps
+
+ENV PATH="$VENV_PATH/bin:$PATH"
+
+USER $DJANGO_USER
