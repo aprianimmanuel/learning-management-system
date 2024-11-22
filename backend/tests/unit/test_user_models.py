@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import pytest
 from django.db import IntegrityError
-
+from django.contrib.auth.hashers import check_password
 from api.user.models import User
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True, databases=["default"])
 class TestUserModel:
     """Test the User model."""
 
@@ -19,7 +19,7 @@ class TestUserModel:
         assert user.email == "testuser@example.com"
         assert user.whatsapp_number is None
         assert user.is_verified is False
-        assert user.check_password("securepassword123") is True
+        assert check_password("securepassword123", encoded=user.password_hash) is True
 
     def test_create_user_with_whatsapp_number(self):
         """Test creating a user with a Whatsapp number."""
@@ -28,9 +28,9 @@ class TestUserModel:
             password="securepassword123",
         )
         assert user.email is None
-        assert user.whatsapp_number == "621234567890"
+        assert user.whatsapp_number == "6281234567890"
         assert user.is_verified is False
-        assert user.check_password("securepassword123") is True
+        assert check_password("securepassword123", encoded=user.password_hash) is True
 
     def test_create_user_requires_email_or_whatsapp(self):
         """Test creating a user with neither email nor Whatsapp number."""
@@ -53,7 +53,7 @@ class TestUserModel:
         assert superuser.whatsapp_number == "6281234567890"
         assert superuser.is_verified is True
         assert superuser.is_admin is True
-        assert superuser.check_password("securepassword123") is True
+        assert check_password("securepassword123", encoded=superuser.password_hash) is True
 
     def test_create_user_duplicate_email(self):
         """Test creating a user with a duplicate email."""
@@ -76,7 +76,7 @@ class TestUserModel:
         with pytest.raises(IntegrityError):
             User.objects.create_user(
                 whatsapp_number="6281234567890",
-                password="different_password123"
+                password="different_password123",
             )
 
     def test_user_string_representation_with_email(self):
